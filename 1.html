@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>si-na</title>
+    <style>
+        td {
+            padding: 10px;
+        }
+
+        .r {
+            color: red;
+        }
+
+        .g {
+            color: blue;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <table border="1" cellspacing="0">
+            <thead>
+                <tr>
+                    <td>证券代码</td>
+                    <td>证券名称</td>
+                    <td>最新价</td>
+                    <td>涨跌额</td>
+                    <td>涨跌幅</td>
+                    <td>成交量</td>
+                    <td>成交额</td>
+                </tr>
+            </thead>
+            <tbody id="stock"> </tbody>
+        </table>
+    </div>
+    <script type="text/javascript">
+        //证券简称,最新价,涨跌额,涨跌幅,成交量,成交额
+        //证券简称,今日开盘价,昨日收盘价,最近成交价,最高成交价,最低成交价,买入价,卖出价,成交数量,成交金额,买数量一,买价位一,买数量二,买价位二,买数量三 ,买价位三,买数量四,买价位四,买数量五,买价位五,卖数量一,卖价位一,卖数量二,卖价位二,卖数量三,卖价位三,卖数量四,卖价位四,卖数量五,卖价位五,行情日期,行情时间,停牌状态
+        //证券代码
+        var stockCodeArr = ['601990', '002436', '600108', '000592', '601318'];
+        var codeArr = [];
+        var dom = '';
+        for (var i in stockCodeArr) {
+            if (stockCodeArr[i].startsWith('0')) {
+                codeArr.push('s_sz' + stockCodeArr[i]);
+            } else {
+                codeArr.push('s_sh' + stockCodeArr[i]);
+            }
+            dom += '<tr id="' + codeArr[i] + '"><td>' + stockCodeArr[i] + '</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+        }
+        document.getElementById('stock').innerHTML = dom;
+
+        var codeStr = codeArr.join();
+        var ws = new WebSocket('ws://hq.sinajs.cn/wskt?list=' + codeStr);
+        ws.onopen = function () {
+            ws.send('');
+        }
+        ws.onclose = function () {
+            ws.close();
+        }
+        ws.onerror = function () {
+            ws.close();
+        }
+        ws.onmessage = function (e) {
+            var data = e.data.trim().split(/\r|\n/);
+            console.log(data);
+            for (var i in data) {
+                var singleStock = data[i].split('=');
+                if (singleStock.length == 2) {
+                    var detailArr = singleStock[1].split(',');
+                    var curLine = document.querySelector('#' + singleStock[0]).childNodes;
+                    for (var j in detailArr) {
+                        if (detailArr[j]) {
+                            //如果是涨跌额、涨跌幅字段，则添加颜色
+                            if (j == 2 || j == 3) {
+                                var curCell = '';
+                                if (detailArr[j] > 0) {
+                                    curCell = '<span class="r">' + detailArr[j] + (j == 3 ? '%' : '') + '</span>';
+                                } else if (detailArr[j] < 0) {
+                                    curCell = '<span class="g">' + detailArr[j] + (j == 3 ? '%' : '') + '</span>';
+                                } else {
+                                    curCell = detailArr[j] + (j == 3 ? '%' : '');
+                                }
+                            } else {
+                                curCell = detailArr[j];
+                            }
+                            curLine[parseInt(j) + 1].innerHTML = curCell;
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
