@@ -4,10 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>si-na</title>
+    <title>stock</title>
     <style>
+        html,
+        body {
+            font-size: 12px;
+        }
+
         td {
             padding: 10px;
+            text-align: center;
+            min-width: 60px;
         }
 
         .r {
@@ -30,16 +37,17 @@
                     <td>最新价</td>
                     <td>涨跌额</td>
                     <td>涨跌幅</td>
-                    <td>成交量</td>
-                    <td>成交额</td>
+                    <td>成交量（手）</td>
+                    <td>成交额（万）</td>
                 </tr>
             </thead>
-            <tbody id="stock"> </tbody>
+            <tbody id="stock"></tbody>
         </table>
     </div>
     <script type="text/javascript">
         //证券简称,最新价,涨跌额,涨跌幅,成交量,成交额
         //证券简称,今日开盘价,昨日收盘价,最近成交价,最高成交价,最低成交价,买入价,卖出价,成交数量,成交金额,买数量一,买价位一,买数量二,买价位二,买数量三 ,买价位三,买数量四,买价位四,买数量五,买价位五,卖数量一,卖价位一,卖数量二,卖价位二,卖数量三,卖价位三,卖数量四,卖价位四,卖数量五,卖价位五,行情日期,行情时间,停牌状态
+
         //证券代码
         var stockCodeArr = ['601990', '002436', '600108', '000592', '601318'];
         var codeArr = [];
@@ -55,45 +63,55 @@
         document.getElementById('stock').innerHTML = dom;
 
         var codeStr = codeArr.join();
-        var ws = new WebSocket('ws://hq.sinajs.cn/wskt?list=' + codeStr);
-        ws.onopen = function () {
-            ws.send('');
-        }
-        ws.onclose = function () {
-            ws.close();
-        }
-        ws.onerror = function () {
-            ws.close();
-        }
-        ws.onmessage = function (e) {
-            var data = e.data.trim().split(/\r|\n/);
-            console.log(data);
-            for (var i in data) {
-                var singleStock = data[i].split('=');
-                if (singleStock.length == 2) {
-                    var detailArr = singleStock[1].split(',');
-                    var curLine = document.querySelector('#' + singleStock[0]).childNodes;
-                    for (var j in detailArr) {
-                        if (detailArr[j]) {
-                            //如果是涨跌额、涨跌幅字段，则添加颜色
-                            if (j == 2 || j == 3) {
-                                var curCell = '';
-                                if (detailArr[j] > 0) {
-                                    curCell = '<span class="r">' + detailArr[j] + (j == 3 ? '%' : '') + '</span>';
-                                } else if (detailArr[j] < 0) {
-                                    curCell = '<span class="g">' + detailArr[j] + (j == 3 ? '%' : '') + '</span>';
+        //请求地址
+        var url = 'ws://hq.sinajs.cn/wskt?list=' + codeStr;
+        function init() {
+            var ws = new WebSocket(url);
+            ws.onopen = function () {
+                console.log('连接开始了！');
+                ws.send('');
+            }
+            ws.onclose = function () {
+                console.error('连接终止了！');
+                ws.close();
+                setTimeout(init, 60000);
+            }
+            ws.onerror = function () {
+                console.log('连接出错了！');
+                ws.close();
+            }
+            ws.onmessage = function (e) {
+                var data = e.data.trim().split(/\r|\n/);
+                for (var i in data) {
+                    var singleStock = data[i].split('=');
+                    if (singleStock.length == 2) {
+                        var detailArr = singleStock[1].split(',');
+                        var curLine = document.getElementById(singleStock[0]).childNodes;
+                        for (var j in detailArr) {
+                            if (detailArr[j]) {
+                                //如果是涨跌额、涨跌幅字段，则添加颜色
+                                if (j == 2 || j == 3) {
+                                    var curCell = '';
+                                    if (detailArr[j] > 0) {
+                                        curCell = '<span class="r">' + detailArr[j] + (j == 3 ? '%' : '') + '</span>';
+                                    } else if (detailArr[j] < 0) {
+                                        curCell = '<span class="g">' + detailArr[j] + (j == 3 ? '%' : '') + '</span>';
+                                    } else {
+                                        curCell = detailArr[j] + (j == 3 ? '%' : '');
+                                    }
                                 } else {
-                                    curCell = detailArr[j] + (j == 3 ? '%' : '');
+                                    curCell = detailArr[j];
                                 }
-                            } else {
-                                curCell = detailArr[j];
+                                curLine[parseInt(j) + 1].innerHTML = curCell;
                             }
-                            curLine[parseInt(j) + 1].innerHTML = curCell;
                         }
                     }
                 }
+                ws.send('');
             }
         }
+
+        init();
     </script>
 </body>
 
