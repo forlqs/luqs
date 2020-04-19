@@ -64,12 +64,14 @@
 
         var codeStr = codeArr.join();
         //请求地址
-        var url = 'ws://hq.sinajs.cn/wskt?list=' + codeStr;
+        var url = 'wss://hq.sinajs.cn/wskt?list=' + codeStr;
         function init() {
             var ws = new WebSocket(url);
             ws.onopen = function () {
                 console.log('连接开始了！');
-                ws.send('');
+                setInterval(() => {
+                    ws.send('');
+                }, 60000);
             }
             ws.onclose = function () {
                 console.error('连接终止了！');
@@ -107,7 +109,6 @@
                         }
                     }
                 }
-                ws.send('');
             }
         }
 
