@@ -91,12 +91,12 @@
                         var curLine = document.getElementById(singleStock[0]).childNodes;
                         for (var j in detailArr) {
                             if (detailArr[j]) {
-                                //如果是涨跌额、涨跌幅字段，则添加颜色
-                                if (j == 2 || j == 3) {
+                                //如果是最新价、涨跌额、涨跌幅字段，则添加颜色。根据涨跌额是否大于0判断。涨跌幅添加百分号%
+                                if (/^[123]$/.test(j)) {
                                     var curCell = '';
-                                    if (detailArr[j] > 0) {
+                                    if (detailArr[2] > 0) {
                                         curCell = '<span class="r">' + detailArr[j] + (j == 3 ? '%' : '') + '</span>';
-                                    } else if (detailArr[j] < 0) {
+                                    } else if (detailArr[2] < 0) {
                                         curCell = '<span class="g">' + detailArr[j] + (j == 3 ? '%' : '') + '</span>';
                                     } else {
                                         curCell = detailArr[j] + (j == 3 ? '%' : '');
