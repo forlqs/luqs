@@ -53,7 +53,7 @@
         var codeArr = [];
         var dom = '';
         for (var i in stockCodeArr) {
-            if (/^[03]/.test(stockCodeArr[i])) {
+            if (/^[013]/.test(stockCodeArr[i])) {
                 codeArr.push('s_sz' + stockCodeArr[i]);
             } else {
                 codeArr.push('s_sh' + stockCodeArr[i]);
